@@ -20,7 +20,7 @@ chmod +x "$APP/Contents/MacOS/GitHubInbox"
 cp -R "$BUILD_DIR/GitHubInbox_GitHubInbox.bundle" "$APP/Contents/Resources/"
 cp "$ROOT/Assets/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

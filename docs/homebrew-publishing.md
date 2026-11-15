@@ -14,6 +14,7 @@ Install with:
 
 ```sh
 brew tap abelfubu/tap
+brew trust abelfubu/tap
 brew install --cask gh-inbox
 gh auth login
 open -a "GitHub Inbox"
@@ -53,8 +54,10 @@ The update script downloads the exact public archive, updates its version/checks
 ## Cask verification
 
 ```sh
-brew audit --cask --online --strict Casks/gh-inbox.rb
-brew install --cask Casks/gh-inbox.rb
+brew trust abelfubu/tap
+brew audit --cask --online --strict abelfubu/tap/gh-inbox
+brew style Casks/gh-inbox.rb
+brew install --cask gh-inbox
 open -a "GitHub Inbox"
 brew uninstall --cask gh-inbox
 ```
