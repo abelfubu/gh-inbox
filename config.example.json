@@ -1,0 +1,78 @@
+{
+  "sections": [
+    {
+      "id": "mine",
+      "label": "Mine",
+      "icon": "pr",
+      "view": "mine",
+      "queries": ["author:@me"],
+      "labels": {
+        "3": "label:mine"
+      }
+    },
+    {
+      "id": "review",
+      "label": "Review",
+      "icon": "eye",
+      "view": "review",
+      "queries": ["review-requested:@me -author:@me"]
+    },
+    {
+      "id": "italy",
+      "label": "Targaryen",
+      "icon": "pr",
+      "view": "list",
+      "queries": ["author:fprod", "author:carlos-rivas-easor", "author:abel-delafuente-easor"]
+    }
+  ],
+  "labels": {
+    "4": "label:urgent"
+  },
+  "font": "JetBrains Mono",
+  "repositories": {
+    "nomoapp/nomo-server-app": "~/dev/nomo-server-app"
+  },
+  "colors": {
+    "background": "#0D1117",
+    "chrome": "#16181B",
+    "surface": "#191B1E",
+    "raised": "#23262B",
+    "hover": "#FFFFFF0B",
+    "selected": "#31557A8C",
+    "border": "#FFFFFF17",
+    "foreground": "#E6E8EC",
+    "muted": "#9BA1A9",
+    "dim": "#697079",
+    "accent": "#2F81F7",
+    "green": "#3FB950",
+    "red": "#F85149",
+    "yellow": "#D29922",
+    "orange": "#FFA657",
+    "purple": "#A371F7"
+  },
+  "shortcuts": {
+    "nextPR": ["j"],
+    "previousPR": ["k"],
+    "previousTab": ["h", "[", "cmd-["],
+    "nextTab": ["l", "]", "cmd-g", "cmd-]"],
+    "openSelected": ["enter", "cmd-enter"],
+    "actions": ["K", "o"],
+    "cancel": ["escape"],
+    "fold": ["f"],
+    "refresh": ["cmd-r", "r"],
+    "copy": ["y"],
+    "diff": ["d"],
+    "merge": ["m"],
+    "approve": ["a"],
+    "ready": ["R"],
+    "assign": ["i"],
+    "labels": ["L"],
+    "openConfig": ["cmd-shift-o"],
+    "closeWindow": ["cmd-w"],
+    "nextOption": ["down"],
+    "previousOption": ["up"],
+    "toggleOption": ["space"],
+    "submitForm": ["enter"],
+    "submitApproval": ["cmd-enter"]
+  }
+}

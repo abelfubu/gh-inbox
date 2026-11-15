@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="tray" x1="512" y1="494" x2="512" y2="794" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F6FEB" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#1F6FEB" stop-opacity="0.12"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="960" height="960" rx="216" fill="#0D1117"/>
+  <rect x="38" y="38" width="948" height="948" rx="210" fill="none" stroke="#4A515B" stroke-opacity="0.55" stroke-width="4"/>
+  <path d="M126 222C178 135 264 92 366 76H658C760 92 846 135 898 222" fill="none" stroke="#FFFFFF" stroke-opacity="0.06" stroke-width="20" stroke-linecap="round"/>
+
+  <g filter="url(#shadow)">
+    <path d="M230 540L292 338C301 309 328 290 358 290H666C696 290 723 309 732 338L794 540" fill="none" stroke="#79B8FF" stroke-opacity="0.32" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g fill="none" stroke="#F0F3F6" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="400" cy="330" r="58" fill="#242B33"/>
+      <circle cx="400" cy="632" r="58" fill="#242B33"/>
+      <circle cx="624" cy="632" r="58" fill="#242B33"/>
+      <path d="M458 330H518C577 330 624 377 624 436V574"/>
+      <path d="M400 388V574"/>
+    </g>
+
+    <path d="M184 524H360L416 626H608L664 524H840V714C840 762 801 801 753 801H271C223 801 184 762 184 714V524Z" fill="url(#tray)" stroke="#58A6FF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M363 530L417 632H607L661 530" fill="none" stroke="#A5D6FF" stroke-opacity="0.72" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <circle cx="790" cy="236" r="74" fill="#3FB950" stroke="#1C2128" stroke-width="22"/>
+  <circle cx="770" cy="216" r="22" fill="#A7F3B7" fill-opacity="0.55"/>
+</svg>
