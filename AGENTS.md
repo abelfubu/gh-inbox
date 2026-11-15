@@ -76,6 +76,8 @@ open "/Applications/GitHub Inbox.app"
 pgrep -fl '/Applications/GitHub Inbox.app/Contents/MacOS/GitHubInbox'
 ```
 
+For version publishing, follow [Create a release](README.md#create-a-release) and [Homebrew publishing](docs/homebrew-publishing.md). Only new `v<major>.<minor>.<patch>` tags trigger the GitHub release and automatic Homebrew cask update.
+
 The native smoke tests require real GitHub reads and suitable configured data. If their fixtures are unavailable, report that limitation precisely rather than claiming they passed. UI work also needs a screenshot using `GH_INBOX_SCREENSHOT`; see `README.md` for form captures and sizing variables.
 
 ## Change discipline

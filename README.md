@@ -67,6 +67,19 @@ open "/Applications/GitHub Inbox.app"
 
 `GH_PATH` overrides the `gh` executable. Otherwise the app searches `PATH`, Homebrew, `~/.local/bin/gh`, and `/usr/bin/gh`.
 
+## Create a release
+
+Commit and push your changes to `main`, then create and push an annotated semantic-version tag. The leading `v` is required; a tag such as `0.2.0` without it does not trigger publishing.
+
+```sh
+git switch main
+git pull origin main
+git tag -a v0.2.0 -m "Release v0.2.0"
+git push origin v0.2.0
+```
+
+The tag workflow builds and tests the universal app, publishes the GitHub release, and updates the `gh-inbox` Homebrew cask automatically. Use a new version for every release. See [Homebrew publishing](docs/homebrew-publishing.md) for credentials, verification, and the manual fallback.
+
 ## App icon
 
 The app icon uses the Herdr palette with a PR glyph, inbox tray, and unread indicator. Its editable source is `Assets/AppIcon.svg`; generated outputs are `Assets/AppIcon.icns` and `Assets/AppIcon.png`. The app build copies the icon into `Contents/Resources` and declares it in `Info.plist`.
