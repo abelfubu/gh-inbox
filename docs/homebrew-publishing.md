@@ -33,6 +33,11 @@ Pushing a semantic-version tag runs `.github/workflows/release.yml` on a macOS r
 3. Verifies the app signature, `Info.plist`, and executable architectures.
 4. Creates a ZIP containing `GitHub Inbox.app` at its root and a SHA-256 file.
 5. Publishes both assets to the matching GitHub release.
+6. Sends an `update-cask` repository dispatch to `abelfubu/homebrew-tap`.
+
+The tap's `update-cask.yml` workflow downloads the published archive, updates the cask version and checksum, runs Homebrew audit/style checks, and commits and pushes the change. No manual tap update is needed.
+
+Cross-repository dispatch requires an encrypted `HOMEBREW_TAP_TOKEN` Actions secret in this repository. Prefer a fine-grained token restricted to `abelfubu/homebrew-tap` with **Contents: read and write**. The token is never committed or included in release assets.
 
 To release locally with full Xcode installed:
 
@@ -42,14 +47,14 @@ To release locally with full Xcode installed:
 
 Normal development builds only need Command Line Tools; universal packaging uses `xcbuild` from full Xcode. GitHub-hosted macOS runners provide it.
 
-For a later version, set `APP_VERSION`/`BUILD_NUMBER` as appropriate, tag the release, and update the cask:
+For a later version, set `APP_VERSION`/`BUILD_NUMBER` as appropriate, then push the tag:
 
 ```sh
-cd ~/dev/homebrew-tap
-./scripts/update-cask.sh gh-inbox 0.1.1
+git tag v0.1.1
+git push origin main v0.1.1
 ```
 
-The update script downloads the exact public archive, updates its version/checksum, and checks Ruby syntax. Review, commit, and push the cask change.
+If automatic updating is unavailable, run `./scripts/update-cask.sh gh-inbox 0.1.1` in `~/dev/homebrew-tap`, review the result, and commit and push it manually. The script downloads the exact public archive, updates its version/checksum, and checks Ruby syntax.
 
 ## Cask verification
 
