@@ -3,19 +3,21 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/dist/GitHub Inbox.app"
-BINARY="$ROOT/.build/release/GitHubInbox"
 
 cd "$ROOT"
 if [ "${UNIVERSAL:-0}" = "1" ]; then
+  BUILD_DIR="$ROOT/.build/apple/Products/Release"
   swift build -c release --arch arm64 --arch x86_64
 else
+  BUILD_DIR="$ROOT/.build/release"
   swift build -c release
 fi
+BINARY="$BUILD_DIR/GitHubInbox"
 
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/GitHubInbox"
 chmod +x "$APP/Contents/MacOS/GitHubInbox"
-cp -R "$ROOT/.build/release/GitHubInbox_GitHubInbox.bundle" "$APP/Contents/Resources/"
+cp -R "$BUILD_DIR/GitHubInbox_GitHubInbox.bundle" "$APP/Contents/Resources/"
 cp "$ROOT/Assets/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
