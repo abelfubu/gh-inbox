@@ -33,6 +33,7 @@ gh auth status
 
 ```sh
 brew tap abelfubu/tap
+brew trust abelfubu/tap
 brew install --cask gh-inbox
 ```
 
