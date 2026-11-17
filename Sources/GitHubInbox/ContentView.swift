@@ -121,12 +121,17 @@ struct ContentView: View {
             let foldID: String?
             if store.selectedSection.effectiveView == "review", let pr = store.selectedPR {
                 foldID = pr.requested.contains(store.login) ? "review:you" : "review:teams"
+            } else if let group = PRGrouper.stacks(store.currentPRs ?? []).first(where: { $0.members.count > 1 }) {
+                foldID = "stack:\(group.id)"
+                store.selectPR(group.members[0])
             } else {
-                foldID = PRGrouper.stacks(store.currentPRs ?? []).first(where: { $0.members.count > 1 }).map { "stack:\($0.id)" }
+                foldID = nil
             }
+            let foldPR = store.selectedPR
             if let foldID {
                 sendKey("f", keyCode: 3)
                 precondition(store.folded.contains(foldID), "f did not fold")
+                if let foldPR { store.selectPR(foldPR) }
                 sendKey("f", keyCode: 3)
                 precondition(!store.folded.contains(foldID), "f did not unfold")
             }
@@ -773,13 +778,9 @@ private struct PRRow: View {
             InboxIcon(pr.draft ? "pr-draft" : "pr", size: 13, fallback: "arrow.triangle.pull")
                 .foregroundStyle(pr.draft ? Theme.dim : review ? Theme.muted : status.color)
                 .frame(width: 15).padding(.top, 2)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 5) {
-                    Text(pr.reference).inboxFont(11).foregroundStyle(Theme.dim)
-                    Text(pr.title).inboxFont(12.5, weight: .light).foregroundStyle(pr.draft ? Theme.muted : Theme.foreground)
-                        .lineLimit(1).truncationMode(.tail)
-                }
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
+                    Text(pr.reference).inboxFont(11).foregroundStyle(Theme.dim)
                     if review { Text("\(pr.author) · \(relative(pr.createdAt))").foregroundStyle(Theme.muted) }
                     else { Text(pr.author).foregroundStyle(Theme.muted) }
                     chip(status.text, symbol: status.symbol, color: status.color)
@@ -792,7 +793,10 @@ private struct PRRow: View {
                         chip("\(pr.approvedBy.count)", symbol: "checkmark.seal.fill", color: Theme.green)
                     }
                     if pr.unresolved > 0 { chip("\(pr.unresolved)", symbol: "bubble.left.fill", color: Theme.yellow) }
+                    Spacer(minLength: 0)
                 }.inboxFont(10.5).lineLimit(1)
+                Text(pr.title).inboxFont(12.5, weight: .light).foregroundStyle(pr.draft ? Theme.muted : Theme.foreground)
+                    .lineLimit(2).truncationMode(.tail)
             }
             Spacer(minLength: 0)
         }
