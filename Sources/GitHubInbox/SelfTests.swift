@@ -204,6 +204,12 @@ enum SelfTests {
         let groups = PRGrouper.stacks([pr(2, "top", "bottom"), pr(1, "bottom", "main")])
         try expect(groups.count == 1 && groups[0].members.map(\.number) == [1, 2], "Stack grouping")
         try expect(PRGrouper.stacks([pr(3, "feature", "main")]).count == 1, "Independent PR grouping")
+        let sameHead = PRGrouper.stacks([pr(3, "feature", "main"), pr(4, "feature", "main")])
+        try expect(sameHead.flatMap(\.members).map(\.number) == [3, 4],
+                   "Different PRs sharing a head ref do not crash or disappear")
+        let sameID = PRGrouper.stacks([pr(3, "feature", "main"), pr(3, "feature-copy", "main")])
+        try expect(sameID.flatMap(\.members).map(\.number) == [3],
+                   "Duplicate stable PR identities are grouped only once")
     }
 }
 #endif

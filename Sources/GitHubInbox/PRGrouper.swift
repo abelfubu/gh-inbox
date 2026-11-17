@@ -9,17 +9,20 @@ struct PRGroup: Identifiable {
 
 enum PRGrouper {
     static func stacks(_ prs: [PullRequest]) -> [PRGroup] {
-        let byHead = Dictionary(uniqueKeysWithValues: prs.map { ("\($0.repository):\($0.headRef)", $0) })
+        var seen: Set<String> = []
+        let unique = prs.filter { seen.insert($0.id).inserted }
+        let byHead = Dictionary(unique.map { ("\($0.repository):\($0.headRef)", $0) },
+                                uniquingKeysWith: { first, _ in first })
         var parents: [String: PullRequest] = [:]
-        for pr in prs {
+        for pr in unique {
             if let below = byHead["\(pr.repository):\(pr.baseRef)"], below.id != pr.id { parents[pr.id] = below }
         }
         var children: [String: [PullRequest]] = [:]
-        for pr in prs {
+        for pr in unique {
             if let parent = parents[pr.id] { children[parent.id, default: []].append(pr) }
         }
         var groups: [PRGroup] = []
-        for root in prs where parents[root.id] == nil {
+        for root in unique where parents[root.id] == nil {
             var members: [PullRequest] = []
             func walk(_ pr: PullRequest) {
                 members.append(pr)
