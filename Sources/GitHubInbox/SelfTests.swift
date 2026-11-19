@@ -193,12 +193,13 @@ enum SelfTests {
 
     private static func testStacks() throws {
         let base = Date(timeIntervalSince1970: 1_000)
-        func pr(_ number: Int, _ head: String, _ baseRef: String) -> PullRequest {
+        func pr(_ number: Int, _ head: String, _ baseRef: String,
+                decision: String? = nil, mergeState: String? = nil) -> PullRequest {
             PullRequest(id: "example/repo#\(number)", number: number, title: "PR \(number)",
                         url: URL(string: "https://github.com/example/repo/pull/\(number)")!,
                         repository: "example/repo", author: "test", headRef: head, baseRef: baseRef,
                         draft: false, createdAt: base, updatedAt: base, additions: 0, deletions: 0,
-                        decision: nil, mergeable: nil, mergeState: nil, unresolved: 0,
+                        decision: decision, mergeable: nil, mergeState: mergeState, unresolved: 0,
                         approvedBy: [], changesBy: [], requested: [], checks: CheckCounts())
         }
         let groups = PRGrouper.stacks([pr(2, "top", "bottom"), pr(1, "bottom", "main")])
@@ -210,6 +211,20 @@ enum SelfTests {
         let sameID = PRGrouper.stacks([pr(3, "feature", "main"), pr(3, "feature-copy", "main")])
         try expect(sameID.flatMap(\.members).map(\.number) == [3],
                    "Duplicate stable PR identities are grouped only once")
+        try expect(PRActionArguments.merge(pr(3, "feature", "main")) ==
+                   ["pr", "merge", "3", "--repo", "example/repo", "--squash"],
+                   "Merge action always uses the repository-required squash strategy")
+        let clean = pr(5, "clean", "main", decision: "APPROVED", mergeState: "CLEAN")
+        try expect(PRDisplayStatus.resolve(clean, review: false).text == "Ready to merge",
+                   "Approved clean PRs transition visibly to ready to merge")
+        let blocked = pr(6, "blocked", "main", decision: "APPROVED", mergeState: "BLOCKED")
+        try expect(PRDisplayStatus.resolve(blocked, review: false).text == "Blocked",
+                   "Branch-protection blocking is visible instead of a stale approved state")
+        let behind = pr(7, "behind", "main", decision: "APPROVED", mergeState: "BEHIND")
+        try expect(PRDisplayStatus.resolve(behind, review: false).text == "Behind base",
+                   "Behind-base state is visible")
+        try expect(PRDisplayStatus.resolve(clean, review: true).text == "Approved",
+                   "Review view retains its approved status")
     }
 }
 #endif

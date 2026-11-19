@@ -26,6 +26,41 @@ struct PullRequest: Identifiable, Hashable, Sendable {
     var reference: String { "#\(number)" }
 }
 
+struct PRDisplayState: Equatable, Sendable {
+    enum Tone: Sendable { case dim, green, red, orange, yellow }
+    let text: String
+    let symbol: String
+    let tone: Tone
+}
+
+enum PRDisplayStatus {
+    static func resolve(_ pr: PullRequest, review: Bool) -> PRDisplayState {
+        if pr.draft { return .init(text: "Draft", symbol: "arrow.triangle.pull", tone: .dim) }
+        if pr.mergeable == "CONFLICTING" { return .init(text: "Conflicts", symbol: "exclamationmark.triangle.fill", tone: .red) }
+        if pr.checks.failed > 0 {
+            return .init(text: review ? "CI failing" : "\(pr.checks.failed) check\(pr.checks.failed == 1 ? "" : "s") failing",
+                         symbol: "xmark.circle.fill", tone: .red)
+        }
+        if pr.checks.running > 0 {
+            return .init(text: review ? "CI running" : "CI \(pr.checks.passed)/\(pr.checks.total)",
+                         symbol: "arrow.triangle.2.circlepath", tone: .orange)
+        }
+        if pr.decision == "CHANGES_REQUESTED" {
+            return .init(text: "Changes requested", symbol: "exclamationmark.bubble.fill", tone: .red)
+        }
+        if pr.decision == "REVIEW_REQUIRED" { return .init(text: "Needs review", symbol: "eye.fill", tone: .yellow) }
+        if pr.mergeState == "BLOCKED" { return .init(text: "Blocked", symbol: "pause.circle.fill", tone: .yellow) }
+        if pr.mergeState == "BEHIND" { return .init(text: "Behind base", symbol: "arrow.triangle.pull", tone: .yellow) }
+        if pr.mergeState == "UNKNOWN" { return .init(text: "Checking mergeability", symbol: "arrow.triangle.2.circlepath", tone: .orange) }
+        if review {
+            return pr.decision == "APPROVED"
+                ? .init(text: "Approved", symbol: "checkmark.seal.fill", tone: .green)
+                : .init(text: "Ready for review", symbol: "arrow.triangle.pull", tone: .green)
+        }
+        return .init(text: "Ready to merge", symbol: "checkmark.circle.fill", tone: .green)
+    }
+}
+
 struct CheckCounts: Hashable, Sendable {
     var passed = 0
     var failed = 0

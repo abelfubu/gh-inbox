@@ -1,6 +1,12 @@
 import AppKit
 import Foundation
 
+enum PRActionArguments {
+    static func merge(_ pr: PullRequest) -> [String] {
+        ["pr", "merge", "\(pr.number)", "--repo", pr.repository, "--squash"]
+    }
+}
+
 enum InboxForm: Equatable {
     case labels
     case reviewers
@@ -356,8 +362,8 @@ final class InboxStore: ObservableObject {
             activeForm = .approve
         case "ready": perform(pr, arguments: ["pr", "ready", "\(pr.number)", "--repo", pr.repository], success: "Marked \(pr.reference) ready")
         case "merge":
-            guard confirm("Merge \(pr.reference)?", "\(pr.title)\n\nThis merges into \(pr.baseRef) using a merge commit.", button: "Merge") else { return }
-            perform(pr, arguments: ["pr", "merge", "\(pr.number)", "--repo", pr.repository, "--merge"], success: "Merged \(pr.reference)")
+            guard confirm("Merge \(pr.reference)?", "\(pr.title)\n\nThis merges into \(pr.baseRef) using a squash merge.", button: "Merge") else { return }
+            perform(pr, arguments: PRActionArguments.merge(pr), success: "Merged \(pr.reference)")
         case "labels":
             formText = ""
             formError = nil

@@ -235,6 +235,7 @@ struct ContentView: View {
         }
         #endif
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            if let tab = ProcessInfo.processInfo.environment["GH_INBOX_TAB"] { store.selectTab(tab) }
             if let form {
                 if form == "actions" { store.showActions() } else { store.runAction(form) }
                 if let filter = ProcessInfo.processInfo.environment["GH_INBOX_FILTER"] {
@@ -826,15 +827,15 @@ private struct PRRow: View {
     }
 
     private var status: (text: String, symbol: String, color: Color) {
-        if pr.draft { return ("Draft", "arrow.triangle.pull", Theme.dim) }
-        if pr.mergeable == "CONFLICTING" { return ("Conflicts", "exclamationmark.triangle.fill", Theme.red) }
-        if pr.checks.failed > 0 { return (review ? "CI failing" : "\(pr.checks.failed) check\(pr.checks.failed == 1 ? "" : "s") failing", "xmark.circle.fill", Theme.red) }
-        if pr.checks.running > 0 { return (review ? "CI running" : "CI \(pr.checks.passed)/\(pr.checks.total)", "arrow.triangle.2.circlepath", Theme.orange) }
-        if pr.decision == "CHANGES_REQUESTED" { return ("Changes requested", "exclamationmark.bubble.fill", Theme.red) }
-        if pr.decision == "APPROVED" { return ("Approved", "checkmark.seal.fill", Theme.green) }
-        if review { return ("Ready for review", "arrow.triangle.pull", Theme.green) }
-        if pr.decision == "REVIEW_REQUIRED" { return ("Needs review", "eye.fill", Theme.yellow) }
-        return ("Ready to merge", "checkmark.circle.fill", Theme.green)
+        let state = PRDisplayStatus.resolve(pr, review: review)
+        let color = switch state.tone {
+        case .dim: Theme.dim
+        case .green: Theme.green
+        case .red: Theme.red
+        case .orange: Theme.orange
+        case .yellow: Theme.yellow
+        }
+        return (state.text, state.symbol, color)
     }
 
     private var shouldShowCI: Bool {
@@ -857,7 +858,7 @@ private struct PRRow: View {
             "xmark.circle.fill": "fail", "arrow.triangle.2.circlepath": "spinner",
             "checkmark.circle.fill": "check", "exclamationmark.triangle.fill": "conflict",
             "exclamationmark.bubble.fill": "changes", "eye.fill": "eye",
-            "checkmark.seal.fill": "approved", "bubble.left.fill": "comment",
+            "checkmark.seal.fill": "approved", "bubble.left.fill": "comment", "pause.circle.fill": "paused",
             "arrow.triangle.pull": "pr",
         ][symbol] ?? "pr"
     }

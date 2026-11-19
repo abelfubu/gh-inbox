@@ -10,9 +10,9 @@ The app uses SwiftUI and AppKit directly: no Electron, WebView, Node.js, Tauri, 
 - Titled header with the current tab's qualified search query and PR count, plus a persistent shortcut/footer bar with the last refresh time.
 - Configurable GitHub search tabs with one or more queries per tab.
 - Mine, review-requested, and custom list views.
-- PR stacks, review groups, repository headers, checks, review status, and unread comments.
+- PR stacks, review groups, repository headers, checks, review status, unread comments, and live merge readiness (`Blocked`, `Behind base`, or `Ready to merge`).
 - Keyboard navigation, context actions, refresh, folding, and persistent UI state.
-- Open, copy, approve with a review message, merge with confirmation, mark ready, and assign.
+- Open, copy, approve with a review message, squash-merge with confirmation, mark ready, and assign.
 - Searchable multi-select label and reviewer pickers.
 - Automatic 60-second refresh that preserves previous results when a query fails.
 
