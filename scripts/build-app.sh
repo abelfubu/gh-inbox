@@ -42,5 +42,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 codesign --force --sign - "$APP" >/dev/null
+# LaunchServices caches bundle metadata using the bundle root timestamp.
+# Keep it current even when the app is subsequently copied with ditto -p.
+touch "$APP"
 printf '%s\n' "$APP"
 if [ "${1:-}" = "--open" ]; then open "$APP"; fi

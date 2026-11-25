@@ -1,5 +1,19 @@
 import Foundation
 
+enum MergeStrategy: String, Sendable {
+    case merge
+    case squash
+    case rebase
+
+    var flag: String { "--\(rawValue)" }
+}
+
+struct RepositoryMergeMethods: Decodable, Sendable {
+    let mergeCommitAllowed: Bool
+    let squashMergeAllowed: Bool
+    let rebaseMergeAllowed: Bool
+}
+
 struct GitHubClient: Sendable {
     enum ClientError: LocalizedError {
         case executableNotFound
@@ -53,7 +67,13 @@ struct GitHubClient: Sendable {
             }
             var unique: [String: PullRequest] = [:]
             for try await prs in group {
-                for pr in prs { unique[pr.id] = pr }
+                for pr in prs {
+                    if let existing = unique[pr.id] {
+                        unique[pr.id] = Self.newest(existing, pr)
+                    } else {
+                        unique[pr.id] = pr
+                    }
+                }
             }
             return unique.values.sorted { $0.updatedAt > $1.updatedAt }
         }
@@ -61,6 +81,28 @@ struct GitHubClient: Sendable {
 
     func perform(_ arguments: [String]) throws -> String {
         try Self.run(executable: executable, arguments: arguments)
+    }
+
+    func mergeStrategy(repository: String) throws -> MergeStrategy {
+        let output = try perform(["repo", "view", repository, "--json",
+                                  "mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed"])
+        let methods = try Self.decodeMergeMethods(Data(output.utf8))
+        return try Self.preferredMergeStrategy(methods)
+    }
+
+    static func preferredMergeStrategy(_ methods: RepositoryMergeMethods) throws -> MergeStrategy {
+        if methods.mergeCommitAllowed { return .merge }
+        if methods.squashMergeAllowed { return .squash }
+        if methods.rebaseMergeAllowed { return .rebase }
+        throw ClientError.failed("Repository does not allow merge, squash, or rebase merges.")
+    }
+
+    static func decodeMergeMethods(_ data: Data) throws -> RepositoryMergeMethods {
+        try JSONDecoder().decode(RepositoryMergeMethods.self, from: data)
+    }
+
+    static func newest(_ first: PullRequest, _ second: PullRequest) -> PullRequest {
+        second.updatedAt > first.updatedAt ? second : first
     }
 
     static func qualifiedQuery(_ query: String) -> String {

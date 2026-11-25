@@ -2,8 +2,8 @@ import AppKit
 import Foundation
 
 enum PRActionArguments {
-    static func merge(_ pr: PullRequest) -> [String] {
-        ["pr", "merge", "\(pr.number)", "--repo", pr.repository, "--squash"]
+    static func merge(_ pr: PullRequest, strategy: MergeStrategy) -> [String] {
+        ["pr", "merge", "\(pr.number)", "--repo", pr.repository, strategy.flag]
     }
 }
 
@@ -31,6 +31,18 @@ enum FormOptionFilter {
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
             .joined(separator: " ")
+    }
+}
+
+enum InboxRefresh {
+    static func merging(previous: [String: SectionResult], new: [String: SectionResult]) -> [String: SectionResult] {
+        var merged = new
+        for (id, result) in new where result.prs == nil && result.error != nil {
+            if let previousPRs = previous[id]?.prs {
+                merged[id] = SectionResult(id: id, prs: previousPRs, error: result.error)
+            }
+        }
+        return merged
     }
 }
 
@@ -68,6 +80,7 @@ final class InboxStore: ObservableObject {
     private let defaults = UserDefaults.standard
     private var autoTask: Task<Void, Never>?
     private var refreshTask: Task<Void, Never>?
+    private var refreshPending = false
 
     init(configStore: ConfigStore = .standard) {
         self.configStore = configStore
@@ -140,14 +153,26 @@ final class InboxStore: ObservableObject {
         autoTask = nil
         refreshTask?.cancel()
         refreshTask = nil
+        refreshPending = false
     }
 
     func refresh() {
-        guard refreshTask == nil else { return }
+        guard refreshTask == nil else {
+            refreshPending = true
+            return
+        }
+        refreshPending = false
         isRefreshing = true
         refreshTask = Task { [weak self] in
             guard let self else { return }
-            defer { self.isRefreshing = false; self.refreshTask = nil }
+            defer {
+                self.isRefreshing = false
+                self.refreshTask = nil
+                if self.refreshPending {
+                    self.refreshPending = false
+                    self.refresh()
+                }
+            }
             do {
                 let config = try self.configStore.load()
                 Theme.apply(config.colors ?? [:])
@@ -179,7 +204,7 @@ final class InboxStore: ObservableObject {
                     return RefreshPayload(login: client.login, results: results)
                 }.value
                 self.login = payload.login
-                self.results = payload.results
+                self.results = InboxRefresh.merging(previous: self.results, new: payload.results)
                 let errors = payload.results.values.compactMap(\.error)
                 self.errorMessage = errors.isEmpty ? nil : errors.joined(separator: "\n")
                 self.lastUpdated = Date()
@@ -362,8 +387,20 @@ final class InboxStore: ObservableObject {
             activeForm = .approve
         case "ready": perform(pr, arguments: ["pr", "ready", "\(pr.number)", "--repo", pr.repository], success: "Marked \(pr.reference) ready")
         case "merge":
-            guard confirm("Merge \(pr.reference)?", "\(pr.title)\n\nThis merges into \(pr.baseRef) using a squash merge.", button: "Merge") else { return }
-            perform(pr, arguments: PRActionArguments.merge(pr), success: "Merged \(pr.reference)")
+            guard confirm("Merge \(pr.reference)?", "\(pr.title)\n\nThis merges into \(pr.baseRef) using the repository's preferred available merge strategy.", button: "Merge") else { return }
+            notice = "Checking merge policy for \(pr.reference)…"
+            Task {
+                do {
+                    let strategy = try await Task.detached {
+                        try GitHubClient().mergeStrategy(repository: pr.repository)
+                    }.value
+                    self.perform(pr, arguments: PRActionArguments.merge(pr, strategy: strategy),
+                                 success: "Merged \(pr.reference) using \(strategy.rawValue)")
+                } catch {
+                    self.errorMessage = error.localizedDescription
+                    self.notice = nil
+                }
+            }
         case "labels":
             formText = ""
             formError = nil

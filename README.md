@@ -12,7 +12,7 @@ The app uses SwiftUI and AppKit directly: no Electron, WebView, Node.js, Tauri, 
 - Mine, review-requested, and custom list views.
 - PR stacks, review groups, repository headers, checks, review status, unread comments, and live merge readiness (`Blocked`, `Behind base`, or `Ready to merge`).
 - Keyboard navigation, context actions, refresh, folding, and persistent UI state.
-- Open, copy, approve with a review message, squash-merge with confirmation, mark ready, and assign.
+- Open, copy, approve with a review message, merge with confirmation, mark ready, and assign. Merge automatically follows current repository policy, preferring merge commits, then squash, then rebase.
 - Searchable multi-select label and reviewer pickers.
 - Automatic 60-second refresh that preserves previous results when a query fails.
 

@@ -194,11 +194,12 @@ enum SelfTests {
     private static func testStacks() throws {
         let base = Date(timeIntervalSince1970: 1_000)
         func pr(_ number: Int, _ head: String, _ baseRef: String,
-                decision: String? = nil, mergeState: String? = nil) -> PullRequest {
-            PullRequest(id: "example/repo#\(number)", number: number, title: "PR \(number)",
+                decision: String? = nil, mergeState: String? = nil,
+                title: String? = nil, updatedAt: Date? = nil) -> PullRequest {
+            PullRequest(id: "example/repo#\(number)", number: number, title: title ?? "PR \(number)",
                         url: URL(string: "https://github.com/example/repo/pull/\(number)")!,
                         repository: "example/repo", author: "test", headRef: head, baseRef: baseRef,
-                        draft: false, createdAt: base, updatedAt: base, additions: 0, deletions: 0,
+                        draft: false, createdAt: base, updatedAt: updatedAt ?? base, additions: 0, deletions: 0,
                         decision: decision, mergeable: nil, mergeState: mergeState, unresolved: 0,
                         approvedBy: [], changesBy: [], requested: [], checks: CheckCounts())
         }
@@ -211,9 +212,33 @@ enum SelfTests {
         let sameID = PRGrouper.stacks([pr(3, "feature", "main"), pr(3, "feature-copy", "main")])
         try expect(sameID.flatMap(\.members).map(\.number) == [3],
                    "Duplicate stable PR identities are grouped only once")
-        try expect(PRActionArguments.merge(pr(3, "feature", "main")) ==
-                   ["pr", "merge", "3", "--repo", "example/repo", "--squash"],
-                   "Merge action always uses the repository-required squash strategy")
+        try expect(PRActionArguments.merge(pr(3, "feature", "main"), strategy: .merge) ==
+                   ["pr", "merge", "3", "--repo", "example/repo", "--merge"],
+                   "Merge action uses the repository-detected merge strategy")
+        let mergeMethods = try GitHubClient.decodeMergeMethods(Data(
+            #"{"mergeCommitAllowed":true,"squashMergeAllowed":true,"rebaseMergeAllowed":false}"#.utf8))
+        let preferredMerge = try GitHubClient.preferredMergeStrategy(mergeMethods)
+        try expect(preferredMerge == .merge,
+                   "Merge commits are preferred when repository policy allows them")
+        let squashOnly = try GitHubClient.decodeMergeMethods(Data(
+            #"{"mergeCommitAllowed":false,"squashMergeAllowed":true,"rebaseMergeAllowed":true}"#.utf8))
+        let preferredSquash = try GitHubClient.preferredMergeStrategy(squashOnly)
+        try expect(preferredSquash == .squash,
+                   "Merge strategy falls back to squash without code changes")
+        let rebaseOnly = RepositoryMergeMethods(mergeCommitAllowed: false, squashMergeAllowed: false, rebaseMergeAllowed: true)
+        let preferredRebase = try GitHubClient.preferredMergeStrategy(rebaseOnly)
+        try expect(preferredRebase == .rebase,
+                   "Merge strategy falls back to rebase when it is the only allowed method")
+        let preserved = InboxRefresh.merging(
+            previous: ["mine": SectionResult(id: "mine", prs: [pr(3, "feature", "main")])],
+            new: ["mine": SectionResult(id: "mine", error: "offline")]
+        )
+        try expect(preserved["mine"]?.prs?.count == 1 && preserved["mine"]?.error == "offline",
+                   "Failed refreshes preserve prior results and expose the new error")
+        let newer = pr(3, "feature", "main", title: "Newer snapshot",
+                       updatedAt: base.addingTimeInterval(60))
+        try expect(GitHubClient.newest(pr(3, "feature", "main"), newer).title == "Newer snapshot",
+                   "Overlapping queries prefer the newest PR snapshot")
         let clean = pr(5, "clean", "main", decision: "APPROVED", mergeState: "CLEAN")
         try expect(PRDisplayStatus.resolve(clean, review: false).text == "Ready to merge",
                    "Approved clean PRs transition visibly to ready to merge")
